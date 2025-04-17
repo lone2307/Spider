@@ -1,1 +1,1 @@
-A simple llm model training on Shakespeare writes
+A simple transformer model train on Shakespeare writes
