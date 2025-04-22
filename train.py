@@ -19,9 +19,10 @@ model = model.to(device)
 def criterion(output, expected):
     return torch.nn.functional.cross_entropy(output.reshape(-1, vocab_size), expected.reshape(-1))
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, fused=True)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1, fused=True)
+scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, variable_lr)
 
-trainer = Trainer(criterion, optimizer)
+trainer = Trainer(criterion, optimizer, scheduler)
 
 dataloader  = DataLoader(dataLoad(True), batch_size, True)
-trainer.train(model, dataloader, 10)
+trainer.train(model, dataloader, 2, batch_limit)

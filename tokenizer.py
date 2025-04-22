@@ -19,5 +19,5 @@ def encoder(text, vocab):
     tokens = re.findall(r"\b\w+\b|[.,!?;]", text) 
     return [vocab.get(token) for token in tokens]
 
-def decoder(text ,token_ids):
-    return " ".join([text.get(i) for i in token_ids])
+def decoder(reverse_vocab, token_ids):
+    return " ".join([reverse_vocab.get(i, "<unk>") for i in token_ids])

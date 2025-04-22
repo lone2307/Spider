@@ -123,13 +123,16 @@ class Transformer(nn.Module):
         return logits
 
     def generate(self, idx, max_new_tokens):
-        
+        device = next(self.parameters()).device  # Get the device model is on
+
+        idx = idx.to(device)  # Ensure idx is on the same device as model
+
         for _ in range(max_new_tokens):
             idx_cond = idx[:, -block_size:]
-            logits = self.forward(idx_cond)
+            logits = self(idx_cond)
             logits = logits[:, -1, :]
-            probs = nn.functional.softmax(logits, dim=-1) # (B, C)
-            idx_next = torch.multinomial(probs, num_samples=1) # (B, 1)
+            probs = nn.functional.softmax(logits, dim=-1)
+            idx_next = torch.multinomial(probs, num_samples=1)
             idx = torch.cat((idx, idx_next), dim=1)
         
         return idx
