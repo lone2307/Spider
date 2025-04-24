@@ -57,7 +57,6 @@ class multiHeadAttention(nn.Module):
     def __init__ (self):
         super().__init__()
                 
-        self.norm = nn.RMSNorm(embedding_dimensions)
         self.multiHead = nn.ModuleList([singleHeadAttention() for _ in range(number_heads)])
         self.proj = nn.Linear(embedding_dimensions,embedding_dimensions)
         self.dropout = nn.Dropout(0.2)
@@ -89,7 +88,6 @@ class DecoderBlock(nn.Module):
         super().__init__()
 
         self.attention = multiHeadAttention()
-        self.norm = nn.RMSNorm(embedding_dimensions)
         self.dropout = nn.Dropout(0.2)
         self.feedForward = FeedForward()
         
