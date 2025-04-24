@@ -4,7 +4,7 @@ import math
 batch_limit = None
 
 
-batch_size = 32
+batch_size = 16
 block_size = 256
 
 vocab_size = 11460
@@ -13,7 +13,7 @@ max_seq_len = 5000
 embedding_dimensions = 512
 num_layers = 8
 number_heads = 8
-head_size = 64
+head_size = embedding_dimensions/number_heads
 
 
 checkpoint_path = os.path.join('checkpoints', 'spider.checkpoint')
