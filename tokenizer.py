@@ -1,5 +1,3 @@
-import torch as nn
-import torch.utils as utils
 import re
 from collections import Counter
 from settings import *

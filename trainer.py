@@ -1,6 +1,4 @@
-import os
 import time
-import torch
 
 from device import device
 
