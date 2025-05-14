@@ -38,6 +38,7 @@ class singleHeadAttention(nn.Module):
         
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
         self.dropout = nn.Dropout(0.2)
+
     def forward(self, x):
         b,t,c = x.shape
         k = self.key(x)

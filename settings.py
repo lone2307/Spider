@@ -3,7 +3,6 @@ import math
 
 batch_limit = None
 
-
 batch_size = 16
 block_size = 256
 
