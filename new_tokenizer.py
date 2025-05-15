@@ -11,56 +11,51 @@ def vocab_gen():
 
 class tokenizer:
     def __init__(self):
-        self.wrd_counter = Counter()
         self.text = vocab_gen()
         self.vocab = set()
         self.vocab_set = Counter()
         
     def token_gen(self):
         # gen and count word
-        tokens = re.findall(r"\b\w+\b|[.,!?;:]", self.text)
-        tokens = Counter(tokens)
+        tokens_counts = re.findall(r"\b\w+\b|[.,!?;:]", self.text)
+        tokens_counts = Counter(tokens_counts)
 
-        #divide word
+        #divide word to subwords
         corpus_set = []
-        for word, freq in tokens.items():
+        for word, freq in tokens_counts.items():
             word_set = [word[0]] + ["##" + c for c in word[1:]]
             word_set.append(freq)
             corpus_set.append(word_set)
-        
-        pre_vocab_set = set()
-        
+                
         while len(self.vocab) < vocab_size:
             # generate paired subword
             temp_counter = Counter()
             for word in corpus_set:
-                for vocab in range(len(word[:-2])):
+                for vocab in range(len(word) - 2):
                     temp_counter[(word[vocab], word[vocab+1])] += word[-1]
             
             # get most common paired subword
             queue_vocab = temp_counter.most_common(1)
             queue_subword = queue_vocab[0][0][0] + queue_vocab[0][0][1][2:]
             queue_freq = queue_vocab[0][1]
-            print((queue_subword, queue_freq))
 
             # change most paired subwords into most common subword
             self.vocab.add((queue_subword, queue_freq))
             for word in range(len(corpus_set)):
-                temp_len = len(corpus_set[word][:-2])
-                for vocab in range(temp_len):
+                for vocab in range(len(corpus_set[word]) - 2):
                     if vocab + 2 == len(corpus_set[word]):
                         break
                     if corpus_set[word][vocab] + corpus_set[word][vocab+1][2:] == queue_subword:
                         corpus_set[word] = merge_pair(corpus_set[word], vocab)
-                    if(vocab == len(corpus_set[word][:-2])):
+                    if(vocab == len(corpus_set[word]) - 2):
                         break
             
-            print(self.vocab)
 
         self.vocab = prune_redundant_subwords(self.vocab)
         self.vocab_set = sorted(self.vocab, key=lambda x: -x[1])[:vocab_size]                
     
-
+    def get_vocab_set(self):
+        return self.vocab_set
         
     def decoder(self):
         return 0
