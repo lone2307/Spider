@@ -1,5 +1,3 @@
-import torch
-import numpy as np
 import re
 from collections import Counter, OrderedDict
 from settings import *
@@ -26,16 +24,13 @@ class tokenizer:
         #divide word
         corpus_set = []
         for word, freq in tokens.items():
-            word_set = []
-            word_set.append(word[0])
-            for x in range(1,len(word)):
-                word_set.append("##" + word[x])
+            word_set = [word[0]] + ["##" + c for c in word[1:]]
             word_set.append(freq)
             corpus_set.append(word_set)
         
         pre_vocab_set = set()
         
-        while(len(self.vocab) < vocab_size):
+        while len(self.vocab) < vocab_size:
             # generate paired subword
             temp_counter = Counter()
             for word in corpus_set:
@@ -47,30 +42,23 @@ class tokenizer:
             queue_subword = queue_vocab[0][0][0] + queue_vocab[0][0][1][2:]
             queue_freq = queue_vocab[0][1]
             print((queue_subword, queue_freq))
-            
-            # remove smaller subword
-            for word, freq in self.vocab:
-                if word in queue_vocab[0][0]:
-                    if freq == queue_freq:
-                        self.vocab.remove(word)
 
-            # 
+            # change most paired subwords into most common subword
             self.vocab.add((queue_subword, queue_freq))
-            for word in corpus_set:
-                temp_len = len(word[:-2])
+            for word in range(len(corpus_set)):
+                temp_len = len(corpus_set[word][:-2])
                 for vocab in range(temp_len):
-                    if(vocab == len(word[:-2])):
+                    if vocab + 2 == len(corpus_set[word]):
                         break
-                    if word[vocab] + word[vocab+1] == queue_subword:
-                        word = merge_pair(word, vocab)
-                        if(vocab == len(word[:-2])):
-                            break
+                    if corpus_set[word][vocab] + corpus_set[word][vocab+1][2:] == queue_subword:
+                        corpus_set[word] = merge_pair(corpus_set[word], vocab)
+                    if(vocab == len(corpus_set[word][:-2])):
+                        break
             
             print(self.vocab)
-        self.vocab_set = pre_vocab_set.most_common(vocab_size)
-        
-        print(pre_vocab_set)
-                
+
+        self.vocab = prune_redundant_subwords(self.vocab)
+        self.vocab_set = sorted(self.vocab, key=lambda x: -x[1])[:vocab_size]                
     
 
         
@@ -81,7 +69,25 @@ class tokenizer:
         return 0
 
 
-def merge_pair(arr, i):
-    if i < 0 or i >= len(arr) - 1:
-        raise IndexError("Invalid merge index")
-    return arr[:i] + [arr[i] + arr[i+1]] + arr[i+2:]
+def merge_pair(word_list, i):
+    return word_list[:i] + [word_list[i] + word_list[i+1][2:]] + word_list[i+2:]
+
+def prune_redundant_subwords(vocab):
+    vocab_list = list(vocab)
+    
+    vocab_list.sort(key=lambda x: (-len(x[0]), -x[1]))
+
+    filtered_vocab = []
+    seen = {}
+
+    for subword, freq in vocab_list:
+        should_keep = True
+        for kept_word, kept_freq in seen.items():
+            if kept_word.startswith(subword) and kept_freq == freq:
+                should_keep = False
+                break
+        if should_keep:
+            filtered_vocab.append((subword, freq))
+            seen[subword] = freq
+
+    return set(filtered_vocab)
