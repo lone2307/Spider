@@ -12,7 +12,7 @@ max_seq_len = 5000
 embedding_dimensions = 512
 num_layers = 8
 number_heads = 8
-head_size = embedding_dimensions/number_heads
+head_size = 64
 
 vocab_path = "vocab.json"
 

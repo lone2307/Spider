@@ -1,6 +1,5 @@
 from torch.utils.data import Dataset
 from settings import *
-from tokenizer import tokenGen, encoder
 import torch
 from WordPiece_tokenizer import tokenizer
 
@@ -23,11 +22,11 @@ def dataLoad(train):
         text = f.read().lower()
 
     encoded = tokenize.encoder(text)
+    print(encoded)
 
     if train:
         encoded = encoded[:int(0.9*len(encoded))]
     else:
         encoded = encoded[int(0.9*len(encoded)):]
         
-    
     return Dataset(torch.tensor(encoded))
