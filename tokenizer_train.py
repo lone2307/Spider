@@ -1,10 +1,10 @@
-
 from settings import *
 from new_tokenizer import tokenizer
-
 
 new_vocab = tokenizer()
 
 new_vocab.token_gen()
 
-print(new_vocab.get_vocab_set)
+new_vocab.load_vocab()
+
+print(new_vocab.encoder("How's going on"))

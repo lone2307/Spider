@@ -6,7 +6,7 @@ batch_limit = None
 batch_size = 16
 block_size = 256
 
-vocab_size = 11460
+vocab_size = 11000
 max_seq_len = 5000
 
 embedding_dimensions = 512
@@ -14,8 +14,10 @@ num_layers = 8
 number_heads = 8
 head_size = embedding_dimensions/number_heads
 
+vocab_path = "vocab.json"
 
 checkpoint_path = os.path.join('checkpoints', 'spider.checkpoint')
+
 
 lr_max = 3e-4
 lr_min = 3e-6
