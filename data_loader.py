@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 from settings import *
 from tokenizer import tokenGen, encoder
 import torch
+from WordPiece_tokenizer import tokenizer
 
 class Dataset(Dataset):
     def __init__(self, text_index):
@@ -15,10 +16,13 @@ class Dataset(Dataset):
 
 
 def dataLoad(train):
-    vocab = tokenGen()
+    tokenize = tokenizer()
+    tokenize.token_gen()
+    
     with open("archive/input.txt", "r", encoding="utf-8") as f:
         text = f.read().lower()
-    encoded = encoder(text, vocab)
+
+    encoded = tokenize.encoder(text)
 
     if train:
         encoded = encoded[:int(0.9*len(encoded))]

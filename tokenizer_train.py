@@ -1,10 +1,16 @@
 from settings import *
-from new_tokenizer import tokenizer
+from WordPiece_tokenizer import tokenizer
 
 new_vocab = tokenizer()
 
-new_vocab.token_gen()
-
 new_vocab.load_vocab()
 
-print(new_vocab.encoder("How's going on"))
+sample_text = "What work's, my countrymen, in hand? where go you. With bats and clubs?"
+
+test = new_vocab.encoder(sample_text)
+
+print("Sample:  " + sample_text)
+
+print(f"Encoded: {test}")
+
+print("Decoded: " + new_vocab.decoder(test))

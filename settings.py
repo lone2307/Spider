@@ -18,7 +18,6 @@ vocab_path = "vocab.json"
 
 checkpoint_path = os.path.join('checkpoints', 'spider.checkpoint')
 
-
 lr_max = 3e-4
 lr_min = 3e-6
 lr_start = 3e-5

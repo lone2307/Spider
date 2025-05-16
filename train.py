@@ -1,17 +1,10 @@
 import torch
-from tokenizer import encoder, tokenGen
 from transformer import Transformer
 from settings import *
 from device import device
 from torch.utils.data import DataLoader
 from trainer import Trainer
 from data_loader import dataLoad
-
-vocab = tokenGen()
-
-sample_text = "What work's, my countrymen, in hand? where go you. With bats and clubs?"
-
-encoded_sample = encoder(sample_text.lower(),vocab)
 
 model = Transformer()
 model = model.to(device)
