@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 from settings import *
 import torch
-from WordPiece_tokenizer import tokenizer
+from WordPiece import tokenizer
 
 class Dataset(Dataset):
     def __init__(self, text_index):

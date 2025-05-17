@@ -2,7 +2,7 @@ import torch
 from transformer import Transformer
 from save import load_model
 from device import device
-from WordPiece_tokenizer import tokenizer
+from WordPiece import tokenizer
 
 model = Transformer()
 model = model.to(device)

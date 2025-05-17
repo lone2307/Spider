@@ -1,5 +1,5 @@
 from settings import *
-from WordPiece_tokenizer import tokenizer
+from WordPiece import tokenizer
 
 new_vocab = tokenizer()
 
