@@ -1,0 +1,4 @@
+*.checkpoint
+*.checkpoint.old
+*.pyc
+*.json

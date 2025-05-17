@@ -18,6 +18,9 @@ class tokenizer:
         self.vocab_set = {}
         
     def token_gen(self):
+        if os.path.exists(vocab_path):
+            self.load_vocab()
+            return 0
         # gen and count word
         tokens = re.findall(r"\b\w+\b|[.,!?;:(){}\[\]\"'<>\\/@#$%^&*_+=|~`-]", self.text)        
         punct_set = set(string.punctuation)
@@ -143,7 +146,7 @@ class tokenizer:
     def decoder(self, logit):
         text = ""
         for token in logit:
-            if "##" in self.vocab_set[token]:
+            if "##" in self.vocab_set[token][0]:
                 text = text + self.vocab_set[token][0][2:]
             else:
                 text = text + " " + self.vocab_set[token][0]
