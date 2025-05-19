@@ -5,9 +5,12 @@ from device import device
 from torch.utils.data import DataLoader
 from trainer import Trainer
 from data_loader import dataLoad
+from param import get_param
 
 model = Transformer()
 model = model.to(device)
+
+print(get_param(model))
 
 def criterion(output, expected):
     return torch.nn.functional.cross_entropy(output.reshape(-1, vocab_size), expected.reshape(-1))
