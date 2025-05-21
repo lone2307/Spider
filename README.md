@@ -1,6 +1,7 @@
 # Spider
 
 A simple transformer model train on Shakespeare writes
+
 Default settings:
  - 11000 vocabs
  - 30M parameters
