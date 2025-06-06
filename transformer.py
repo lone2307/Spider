@@ -4,7 +4,6 @@ import torch
 import math
 from settings import *
 
-
 def YaRN_RoPE(x, seq_len, training = False):
     i = torch.arange(0, embedding_dimensions, 2, device=x.device)
     NTK_alpha = 1 if training else seq_len / max_seq_len
@@ -71,20 +70,20 @@ class multiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, x):
-        seq_len = x.size()[1]
-        q = self.query(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
-        k = self.key(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
-        v = self.value(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
+        batch, seq_len, embed = x.shape
+        q = self.query(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
+        k = self.key(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
+        v = self.value(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
 
-        q = self.YaRN_RoPE(q)
-        k = self.YaRN_RoPE(k)
+        q = YaRN_RoPE(q, seq_len, self.training)
+        k = YaRN_RoPE(k, seq_len, self.training)
 
         score = q @ k.transpose(-2,-1) * head_size**-0.5
         score = score.masked_fill(self.tril[:seq_len, :seq_len].unsqueeze(0).unsqueeze(0) == 0, float('-inf'))
         score = nn.functional.softmax(score,dim=-1)
         
         out = score @ v
-        out = out.contiguous().view(batch_size, seq_len, embedding_dimensions)
+        out = out.contiguous().view(batch, seq_len, embedding_dimensions)
         out = self.dropout(self.proj(out))
         
         return out
