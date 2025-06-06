@@ -2,6 +2,10 @@
 
 A simple transformer model train on Shakespeare writes
 
+Tech used:
+ - WordPiece tokenizer
+ - RoPE positional embedding, combined with NTK and YaRN for better scaling
+
 Default settings:
  - 11000 vocabs
  - 30M parameters
