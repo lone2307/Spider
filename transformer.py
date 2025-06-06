@@ -5,9 +5,9 @@ import math
 from settings import *
 
 def YaRN_RoPE(x, seq_len, training = False):
-    i = torch.arange(0, embedding_dimensions, 2, device=x.device)
+    i = torch.arange(0, head_size, 2, device=x.device)
     NTK_alpha = 1 if training else seq_len / max_seq_len
-    inv_freq = 1.0 / (10000 ** (i / (embedding_dimensions * NTK_alpha)))
+    inv_freq = 1.0 / (10000 ** (i / (head_size * NTK_alpha)))
     pos = torch.arange(seq_len, device=x.device)
     yarn_scaling = (1/torch.sqrt(1 + YaRN_alpha * ((pos/block_size) ** 2 ))).unsqueeze(1)
     theta = torch.einsum("i,j->ij", pos, inv_freq)
@@ -60,9 +60,9 @@ class multiHeadAttention(nn.Module):
     def __init__ (self):
         super().__init__()
 
-        self.key   = nn.Linear(embedding_dimensions, head_size, bias=False)
-        self.query = nn.Linear(embedding_dimensions, head_size, bias=False)
-        self.value = nn.Linear(embedding_dimensions, head_size, bias=False)
+        self.key   = nn.Linear(embedding_dimensions, embedding_dimensions, bias=False)
+        self.query = nn.Linear(embedding_dimensions, embedding_dimensions, bias=False)
+        self.value = nn.Linear(embedding_dimensions, embedding_dimensions, bias=False)
         
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
 
