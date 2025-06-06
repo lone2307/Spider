@@ -3,7 +3,6 @@ import time
 from device import device
 
 import torch.nn as nn
-import torch
 from save import save_model
 
 

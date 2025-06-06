@@ -7,12 +7,16 @@ batch_size = 16
 block_size = 256
 
 vocab_size = 11000
-max_seq_len = 5000
+max_seq_len = 512
 
 embedding_dimensions = 512
 num_layers = 8
 number_heads = 8
 head_size = 64
+
+# YaRN config
+YaRN_alpha = 2
+
 
 vocab_path = "vocab.json"
 

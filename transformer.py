@@ -1,8 +1,37 @@
+from turtle import forward
 import torch.nn as nn
 import torch
 import math
 from settings import *
 
+
+def YaRN_RoPE(x, seq_len, training = False):
+    i = torch.arange(0, embedding_dimensions, 2, device=x.device)
+    NTK_alpha = 1 if training else seq_len / max_seq_len
+    inv_freq = 1.0 / (10000 ** (i / (embedding_dimensions * NTK_alpha)))
+    pos = torch.arange(seq_len, device=x.device)
+    yarn_scaling = (1/torch.sqrt(1 + YaRN_alpha * ((pos/block_size) ** 2 ))).unsqueeze(1)
+    theta = torch.einsum("i,j->ij", pos, inv_freq)
+    theta = theta * yarn_scaling
+
+
+    sin = torch.sin(theta)[None, None, :, :]
+    cos = torch.cos(theta)[None, None, :, :]
+    
+    x_even = x[..., 0::2]
+    x_odd  = x[..., 1::2]
+
+    x_even_after = x_even * cos - x_odd * sin
+    x_odd_after  = x_even * sin + x_odd * cos
+
+    x_rotated = torch.empty_like(x)
+    x_rotated[...,0::2] = x_even_after
+    x_rotated[...,1::2] = x_odd_after
+
+    return x_rotated
+
+
+# Old PE, not use
 class PositionalEncoding(nn.Module):
     def __init__(self):
         super().__init__()
@@ -28,42 +57,34 @@ class PositionalEncoding(nn.Module):
         return x
 
 
-class singleHeadAttention(nn.Module):
-    def __init__(self):
+class multiHeadAttention(nn.Module):
+    def __init__ (self):
         super().__init__()
-        
+
         self.key   = nn.Linear(embedding_dimensions, head_size, bias=False)
         self.query = nn.Linear(embedding_dimensions, head_size, bias=False)
         self.value = nn.Linear(embedding_dimensions, head_size, bias=False)
         
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
-        self.dropout = nn.Dropout(0.2)
 
-    def forward(self, x):
-        b,t,c = x.shape
-        k = self.key(x)
-        q = self.key(x)
-        v = self.value(x)
-
-        score = q @ k.transpose(-2,-1) * c**-0.5
-        score = score.masked_fill(self.tril[:t, :t] == 0, float('-inf'))
-        score = nn.functional.softmax(score,dim=-1)
-        
-        out = score @ v
-        
-        return out
-
-
-class multiHeadAttention(nn.Module):
-    def __init__ (self):
-        super().__init__()
-                
-        self.multiHead = nn.ModuleList([singleHeadAttention() for _ in range(number_heads)])
         self.proj = nn.Linear(embedding_dimensions,embedding_dimensions)
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, x):
-        out = torch.cat([h(x) for h in self.multiHead], dim=-1)
+        seq_len = x.size()[1]
+        q = self.query(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
+        k = self.key(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
+        v = self.value(x).view(batch_size, seq_len, number_heads, head_size).permute(0,2,1,3)
+
+        q = self.YaRN_RoPE(q)
+        k = self.YaRN_RoPE(k)
+
+        score = q @ k.transpose(-2,-1) * head_size**-0.5
+        score = score.masked_fill(self.tril[:seq_len, :seq_len].unsqueeze(0).unsqueeze(0) == 0, float('-inf'))
+        score = nn.functional.softmax(score,dim=-1)
+        
+        out = score @ v
+        out = out.contiguous().view(batch_size, seq_len, embedding_dimensions)
         out = self.dropout(self.proj(out))
         
         return out
@@ -109,13 +130,9 @@ class Transformer(nn.Module):
         self.block = nn.Sequential(*[DecoderBlock() for _ in range(num_layers)])
         self.norm = nn.LayerNorm(embedding_dimensions)
         self.head = nn.Linear(embedding_dimensions, vocab_size)
-        self.pos_embed = PositionalEncoding()
         
     def forward(self, idx):
-        B, T = idx.shape
-        
         embedding = self.embeddings(idx)
-        embedding = self.pos_embed(embedding)
         x = self.block(embedding)
         x = self.norm(x)
         logits = self.head(x)
