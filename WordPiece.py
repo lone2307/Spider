@@ -21,20 +21,20 @@ class tokenizer:
         if os.path.exists(vocab_path):
             self.load_vocab()
             return 0
-        # gen and count word
+        # Gen and count word
         tokens = re.findall(r"\b\w+\b|[.,!?;:(){}\[\]\"'<>\\/@#$%^&*_+=|~`-]", self.text)        
         punct_set = set(string.punctuation)
         word_tokens = [tok for tok in tokens if tok not in punct_set]
         tokens_counts = Counter(word_tokens)
         
         
-        #remove word length 1
+        # Remove word length 1
         for word in list(tokens_counts):
             if len(word) == 1:
                 self.vocab.add((word, tokens_counts[word]))
                 del tokens_counts[word]
 
-        #divide word to subwords
+        # Divide word to subwords
         corpus_set = []
         for word, freq in tokens_counts.items():
             word_set = [word[0]] + ["##" + c for c in word[1:]]
@@ -42,7 +42,7 @@ class tokenizer:
             corpus_set.append(word_set)
         
         while len(self.vocab) < vocab_size:
-            # generate paired subword
+            # Generate paired subword
             temp_counter = Counter()
             for word in corpus_set:
                 token = word[:-1]
@@ -51,17 +51,17 @@ class tokenizer:
                     pair = token[vocab], token[vocab+1]
                     temp_counter[pair] += freq
             
-            # get most common paired subword
+            # Get most common paired subword
             queue_vocab = temp_counter.most_common(1)
             queue_subword = queue_vocab[0][0][0] + queue_vocab[0][0][1][2:]
             print(queue_subword, queue_vocab[0][1])
             self.vocab.add((queue_subword, queue_vocab[0][1]))
 
-            # combine all the most common pairs
+            # Combine all the most common pairs
             new_corpus = []
 
             for word in corpus_set:
-                tokens = word[:-1]  # exclude frequency
+                tokens = word[:-1]  # Exclude frequency
                 freq = word[-1]
                 
                 i = 0
@@ -79,7 +79,7 @@ class tokenizer:
 
             corpus_set = new_corpus
             
-            # remove unimportant vocab
+            # Remove unimportant vocab
             if len(self.vocab) == vocab_size:
                 print("Cleaning up vocab....")
                 self.vocab = prune_redundant_subwords(self.vocab)
@@ -87,7 +87,7 @@ class tokenizer:
 
         self.vocab_set = sorted(self.vocab, key=lambda x: -x[1])[:vocab_size - 32]
         
-        # add punctuations
+        # Add punctuations
         for p in string.punctuation:
             self.vocab_set.append((p, 999))
             
@@ -105,8 +105,6 @@ class tokenizer:
         pre_load =[vocab for vocab, _ in token_to_id.items()]
         pre_load = sorted(pre_load, key=lambda x: len(x))
         self.vocab_set = [(token, id) for id, token in enumerate(pre_load)]
-        
-        
         
     def get_vocab_set(self):
         return self.vocab_set

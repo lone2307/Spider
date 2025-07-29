@@ -6,7 +6,7 @@ from settings import *
 
 def YaRN_RoPE(x, seq_len, training = False):
     i = torch.arange(0, head_size, 2, device=x.device)
-    NTK_alpha = 1 if training else seq_len / max_seq_len
+    NTK_alpha = 1 if training else seq_len / block_size
     inv_freq = 1.0 / (10000 ** (i / (head_size * NTK_alpha)))
     pos = torch.arange(seq_len, device=x.device)
     yarn_scaling = (1/torch.sqrt(1 + YaRN_alpha * ((pos/block_size) ** 2 ))).unsqueeze(1)
@@ -31,29 +31,29 @@ def YaRN_RoPE(x, seq_len, training = False):
 
 
 # Old PE, not use
-class PositionalEncoding(nn.Module):
-    def __init__(self):
-        super().__init__()
+# class PositionalEncoding(nn.Module):
+#     def __init__(self):
+#         super().__init__()
         
-        pe = torch.zeros(max_seq_len,embedding_dimensions)
+#         pe = torch.zeros(max_seq_len,embedding_dimensions)
 
-        for pos in range(max_seq_len):
-            for i in range(0, embedding_dimensions, 2):
-                pe[pos,i] = math.sin(pos / (10000 ** ((2 * i)/embedding_dimensions)))
-                pe[pos, i+1] = math.cos(pos / (10000 ** ((2*i)/embedding_dimensions)))
+#         for pos in range(max_seq_len):
+#             for i in range(0, embedding_dimensions, 2):
+#                 pe[pos,i] = math.sin(pos / (10000 ** ((2 * i)/embedding_dimensions)))
+#                 pe[pos, i+1] = math.cos(pos / (10000 ** ((2*i)/embedding_dimensions)))
 
-        pe = pe.unsqueeze(0)
-        self.register_buffer('pe', pe)
+#         pe = pe.unsqueeze(0)
+#         self.register_buffer('pe', pe)
 
-    def forward(self, x):
+#     def forward(self, x):
         
-        x = x * math.sqrt(embedding_dimensions)
+#         x = x * math.sqrt(embedding_dimensions)
         
-        seq_len = x.size(1)
+#         seq_len = x.size(1)
         
-        x = x + self.pe[:,:seq_len]
+#         x = x + self.pe[:,:seq_len]
         
-        return x
+#         return x
 
 
 class multiHeadAttention(nn.Module):
