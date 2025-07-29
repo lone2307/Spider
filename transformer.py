@@ -1,4 +1,3 @@
-from turtle import forward
 import torch.nn as nn
 import torch
 import math
@@ -30,7 +29,7 @@ def YaRN_RoPE(x, seq_len, training = False):
     return x_rotated
 
 
-# Old PE, not use
+# Old PE, depreciated
 # class PositionalEncoding(nn.Module):
 #     def __init__(self):
 #         super().__init__()
@@ -64,13 +63,20 @@ class multiHeadAttention(nn.Module):
         self.query = nn.Linear(embedding_dimensions, embedding_dimensions, bias=False)
         self.value = nn.Linear(embedding_dimensions, embedding_dimensions, bias=False)
         
-        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+        self.register_buffer("cached_mask", None)
+        self.cached_seq_len = 0
 
         self.proj = nn.Linear(embedding_dimensions,embedding_dimensions)
         self.dropout = nn.Dropout(0.2)
+    
+    def get_causal_mask(self, seq_len, device):
+        if self.cached_mask is None or self.cached_seq_len < seq_len:
+            self.cached_mask = torch.tril(torch.ones(seq_len, seq_len, device=device)).unsqueeze(0).unsqueeze(0)
+            self.cached_seq_len = seq_len
+        return self.cached_mask[:, :, :seq_len, :seq_len]
 
     def forward(self, x):
-        batch, seq_len, embed = x.shape
+        batch, seq_len, _ = x.shape
         q = self.query(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
         k = self.key(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
         v = self.value(x).view(batch, seq_len, number_heads, head_size).permute(0,2,1,3)
@@ -79,7 +85,10 @@ class multiHeadAttention(nn.Module):
         k = YaRN_RoPE(k, seq_len, self.training)
 
         score = q @ k.transpose(-2,-1) * head_size**-0.5
-        score = score.masked_fill(self.tril[:seq_len, :seq_len].unsqueeze(0).unsqueeze(0) == 0, float('-inf'))
+
+        mask = self.get_causal_mask(seq_len, x.device)
+
+        score = score.masked_fill(mask == 0, float('-inf'))
         score = nn.functional.softmax(score,dim=-1)
         
         out = score @ v
@@ -95,13 +104,16 @@ class FeedForward(nn.Module):
 
         self.feedForward = nn.Sequential(
             nn.Linear(embedding_dimensions, 4*embedding_dimensions),
-            nn.ReLU(),
-            nn.Linear(embedding_dimensions*4, embedding_dimensions),
+            nn.Linear(4*embedding_dimensions, embedding_dimensions),
             nn.Dropout(0.2)
-        )    
-    def forward(self,x):
+        )
+        self.gate_proj = nn.Linear(embedding_dimensions, 4*embedding_dimensions, bias=False)
+        self.up_proj   = nn.Linear(embedding_dimensions, 4*embedding_dimensions, bias=False)
+        self.down_proj = nn.Linear(4*embedding_dimensions, embedding_dimensions, bias=False)
+        self.act_fn    = nn.GELU()
 
-        return self.feedForward(x)
+    def forward(self,x):
+        return self.down_proj(self.act_fn(self.gate_proj(x)) * self.up_proj(x))
 
 
 class DecoderBlock(nn.Module):
@@ -124,12 +136,12 @@ class DecoderBlock(nn.Module):
 class Transformer(nn.Module):
     def __init__(self):
         super().__init__()
-        
+
         self.embeddings = nn.Embedding(vocab_size, embedding_dimensions)
         self.block = nn.Sequential(*[DecoderBlock() for _ in range(num_layers)])
         self.norm = nn.LayerNorm(embedding_dimensions)
-        self.head = nn.Linear(embedding_dimensions, vocab_size)
-        
+        self.head = nn.Linear(embedding_dimensions, vocab_size, bias=False)
+
     def forward(self, idx):
         embedding = self.embeddings(idx)
         x = self.block(embedding)
@@ -138,13 +150,12 @@ class Transformer(nn.Module):
         return logits
 
     def generate(self, idx, max_new_tokens):
-        device = next(self.parameters()).device  # Get the device model is on
 
-        idx = idx.to(device)  # Ensure idx is on the same device as model
+        device = next(self.parameters()).device
+        idx = idx.to(device)
 
         for _ in range(max_new_tokens):
-            idx_cond = idx[:, -block_size:]
-            logits = self(idx_cond)
+            logits = self(idx)
             logits = logits[:, -1, :]
             probs = nn.functional.softmax(logits, dim=-1)
             idx_next = torch.multinomial(probs, num_samples=1)
