@@ -21,18 +21,14 @@ pip install numpy torch
 
 To change hyperparameters: edit settings.py
 
-To train tokenizer:
+To train model, run:
 ```bash
-python tokenizer_train.py
-```
-To train model:
-```bash
-python train.py
+train.ipynb
 ```
 
 To do inference:
 ```bash
-python transformer_inference.py
+inference.ipynb
 ```
 
 
