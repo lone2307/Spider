@@ -4,7 +4,8 @@ A simple transformer model train on Shakespeare writes
 
 Tech used:
  - WordPiece tokenizer
- - RoPE positional embedding, combined with NTK and YaRN for better scaling
+ - Rotary Positional Embedding (RoPE), combined with NTK and YaRN for better long context scaling
+ - GLU (Gated Linear Unit) for Feed Forward layer
 
 Default settings:
  - 11000 vocabs
