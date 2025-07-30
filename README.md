@@ -19,14 +19,18 @@ pip install numpy torch
 
 ## Usage
 
-To change hyperparameters: edit settings.py
+To edit hyperparameters, change values in:
+
+```bash
+settings.py
+```
 
 To train model, run:
 ```bash
 train.ipynb
 ```
 
-To do inference:
+To do inference, run:
 ```bash
 inference.ipynb
 ```
